@@ -1,0 +1,65 @@
+{
+  "name": "pi-codex-agent",
+  "version": "0.1.0",
+  "description": "Export Pi and Oh My Pi activity as Codex-compatible OpenTelemetry logs.",
+  "keywords": [
+    "codex",
+    "oh-my-pi",
+    "omp",
+    "opentelemetry",
+    "otlp",
+    "pi-extension",
+    "pi-package"
+  ],
+  "license": "MIT",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "format": "oxfmt --check .",
+    "format:fix": "oxfmt --write .",
+    "lint": "oxlint src test",
+    "test": "tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run format && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "@opentelemetry/api-logs": "0.220.0",
+    "@opentelemetry/exporter-logs-otlp-proto": "0.220.0",
+    "@opentelemetry/resources": "2.9.0",
+    "@opentelemetry/sdk-logs": "0.220.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.81.1",
+    "@types/node": "^24.10.1",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.81.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "omp": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  }
+}

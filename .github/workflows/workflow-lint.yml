@@ -1,0 +1,96 @@
+name: workflow-lint
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/scripts/**"
+      - ".pinact.yaml"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Download actionlint
+        id: actionlint
+        env:
+          ACTIONLINT_VERSION: v1.7.12
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o /tmp/download-actionlint.bash "https://raw.githubusercontent.com/rhysd/actionlint/$ACTIONLINT_VERSION/scripts/download-actionlint.bash"
+          bash /tmp/download-actionlint.bash "${ACTIONLINT_VERSION#v}"
+      - name: Check workflow files
+        env:
+          ACTIONLINT_EXECUTABLE: ${{ steps.actionlint.outputs.executable }}
+        run: "$ACTIONLINT_EXECUTABLE -color"
+
+  ghalint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Download ghalint
+        env:
+          GHALINT_VERSION: v1.5.6
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          archive="ghalint_${GHALINT_VERSION#v}_linux_amd64.tar.gz"
+          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o "/tmp/$archive" "https://github.com/suzuki-shunsuke/ghalint/releases/download/$GHALINT_VERSION/$archive"
+          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o /tmp/ghalint_checksums.txt "https://github.com/suzuki-shunsuke/ghalint/releases/download/$GHALINT_VERSION/ghalint_${GHALINT_VERSION#v}_checksums.txt"
+          (cd /tmp && grep "  $archive$" ghalint_checksums.txt | sha256sum -c -)
+          tar -xzf "/tmp/$archive" -C /tmp
+          sudo install -m 0755 /tmp/ghalint /usr/local/bin/ghalint
+      - name: Check workflow files
+        run: ghalint run
+
+  zizmor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Run zizmor security check
+        uses: zizmorcore/zizmor-action@6fc4b006235f201fdab3722e17240ab420d580e5 # v0.6.1
+        with:
+          inputs: .github/workflows/
+          min-severity: medium
+          token: ${{ github.token }}
+          advanced-security: false
+          annotations: true
+          version: v1.25.2
+
+  pinact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Download pinact
+        env:
+          PINACT_VERSION: v4.0.0
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          archive="pinact_linux_amd64.tar.gz"
+          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o "/tmp/$archive" "https://github.com/suzuki-shunsuke/pinact/releases/download/$PINACT_VERSION/$archive"
+          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o /tmp/pinact_checksums.txt "https://github.com/suzuki-shunsuke/pinact/releases/download/$PINACT_VERSION/pinact_${PINACT_VERSION#v}_checksums.txt"
+          (cd /tmp && grep "  $archive$" pinact_checksums.txt | sha256sum -c -)
+          tar -xzf "/tmp/$archive" -C /tmp
+          sudo install -m 0755 /tmp/pinact /usr/local/bin/pinact
+      - name: Check pinned action refs
+        run: pinact run --check
