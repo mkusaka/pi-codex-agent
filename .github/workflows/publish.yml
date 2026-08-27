@@ -25,6 +25,5 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: npm install -g npm@^11.15.0
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
