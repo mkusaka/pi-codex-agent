@@ -4,7 +4,7 @@ Pi extension that exports Pi and Oh My Pi activity as Codex-compatible OpenTelem
 
 ## Install
 
-From npm:
+Install from npm and restart the agent:
 
 ```sh
 # Pi
@@ -14,19 +14,7 @@ pi install npm:pi-codex-otel
 omp install npm:pi-codex-otel
 ```
 
-Or clone the repository and install it by absolute path:
-
-```sh
-git clone https://github.com/mkusaka/pi-codex-otel.git
-
-# Pi
-pi install "$PWD/pi-codex-otel"
-
-# Oh My Pi
-omp install "$PWD/pi-codex-otel"
-```
-
-Restart the agent after installation.
+To pin a version, use `npm:pi-codex-otel@0.0.1`.
 
 ## Configure OTLP logs
 
@@ -63,9 +51,22 @@ Prompts are always sent as `[REDACTED]`; only their character length and image c
 
 ## Development
 
+Clone the repository and install dependencies:
+
 ```sh
+git clone https://github.com/mkusaka/pi-codex-otel.git
+cd pi-codex-otel
 pnpm install
 pnpm run check
+```
+
+Run the local source as an extension:
+
+```sh
+# Pi
+pi -e ./src/index.ts
+
+# Oh My Pi
 omp -e ./src/index.ts
 ```
 
