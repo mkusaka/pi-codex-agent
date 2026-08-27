@@ -1,6 +1,6 @@
 {
   "name": "pi-codex-otel",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Export Pi and Oh My Pi activity as Codex-compatible OpenTelemetry logs.",
   "keywords": [
     "codex",
@@ -45,7 +45,8 @@
     "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "check": "pnpm run format && pnpm run lint && pnpm run typecheck && pnpm run test",
-    "prepack": "pnpm run check"
+    "prepack": "pnpm run check",
+    "version": "node -e 'const v=process.env.npm_package_version; const fs=require(\"fs\"); fs.writeFileSync(\"src/index.ts\", fs.readFileSync(\"src/index.ts\",\"utf8\").replace(/const EXTENSION_VERSION = \"[^\"]+\"/, `const EXTENSION_VERSION = \"${v}\"`));' && git add src/index.ts"
   },
   "dependencies": {
     "@opentelemetry/api-logs": "0.220.0",
