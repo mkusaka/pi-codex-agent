@@ -17,13 +17,13 @@ omp install npm:pi-codex-otel
 Or clone the repository and install it by absolute path:
 
 ```sh
-git clone https://github.com/mkusaka/pi-codex-agent.git
+git clone https://github.com/mkusaka/pi-codex-otel.git
 
 # Pi
-pi install "$PWD/pi-codex-agent"
+pi install "$PWD/pi-codex-otel"
 
 # Oh My Pi
-omp install "$PWD/pi-codex-agent"
+omp install "$PWD/pi-codex-otel"
 ```
 
 Restart the agent after installation.
