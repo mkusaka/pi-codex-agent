@@ -2,7 +2,7 @@
 
 ## Trust model
 
-`pi-codex-agent` runs with the local user's permissions. Install only packages and versions you trust.
+`pi-codex-otel` runs with the local user's permissions. Install only packages and versions you trust.
 
 The extension reads the configured OTLP endpoint and headers from the process environment, reads the global Git email when available, and exports Codex-compatible event metadata to that endpoint.
 

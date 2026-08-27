@@ -23,4 +23,4 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
-      - run: pnpm pack --pack-destination /tmp/pi-codex-agent-pack
+      - run: pnpm pack --pack-destination /tmp/pi-codex-otel-pack

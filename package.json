@@ -1,5 +1,5 @@
 {
-  "name": "pi-codex-agent",
+  "name": "pi-codex-otel",
   "version": "0.1.0",
   "description": "Export Pi and Oh My Pi activity as Codex-compatible OpenTelemetry logs.",
   "keywords": [

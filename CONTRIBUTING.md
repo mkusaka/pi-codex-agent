@@ -1,6 +1,6 @@
 # Contributing
 
-`pi-codex-agent` converts Pi and Oh My Pi lifecycle events into Codex-compatible OpenTelemetry logs.
+`pi-codex-otel` converts Pi and Oh My Pi lifecycle events into Codex-compatible OpenTelemetry logs.
 
 ## Development
 

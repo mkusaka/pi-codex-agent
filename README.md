@@ -1,10 +1,20 @@
-# Pi Codex Agent
+# Pi Codex OTEL
 
 Pi extension that exports Pi and Oh My Pi activity as Codex-compatible OpenTelemetry logs. Use it with an existing Codex OTLP pipeline, including collectors that route `codex.*` events to Cloud Logging, BigQuery, or another observability backend.
 
 ## Install
 
-Clone the repository, then install it by absolute path:
+From npm:
+
+```sh
+# Pi
+pi install npm:pi-codex-otel
+
+# Oh My Pi
+omp install npm:pi-codex-otel
+```
+
+Or clone the repository and install it by absolute path:
 
 ```sh
 git clone https://github.com/mkusaka/pi-codex-agent.git
