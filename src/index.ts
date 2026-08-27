@@ -12,7 +12,7 @@ import {
   resolveLogsEndpoint,
 } from "./core.js";
 
-const EXTENSION_VERSION = "0.0.2";
+const EXTENSION_VERSION = "0.0.3";
 
 type Runtime = {
   provider: LoggerProvider;
