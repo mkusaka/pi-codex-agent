@@ -14,7 +14,7 @@ pi install npm:pi-codex-otel
 omp install npm:pi-codex-otel
 ```
 
-To pin a version, use `npm:pi-codex-otel@0.0.1`.
+To pin a version, use `npm:pi-codex-otel@0.0.3`.
 
 ## Configure OTLP logs
 
