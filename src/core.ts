@@ -46,3 +46,19 @@ export function completionAttributes(usage: CodexUsage): Record<string, number> 
     tool_token_count: usage.totalTokens ?? input + output,
   };
 }
+
+/**
+ * Codex reads `user.email` from the `email` claim of the id_token in auth.json.
+ * The token is only decoded, never verified: it is a local file we already trust.
+ */
+export function idTokenEmail(idToken: string | undefined): string | undefined {
+  const payload = idToken?.split(".")[1];
+  if (!payload) return undefined;
+  try {
+    const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    const email = claims.email ?? claims.profile?.email;
+    return typeof email === "string" && email ? email : undefined;
+  } catch {
+    return undefined;
+  }
+}

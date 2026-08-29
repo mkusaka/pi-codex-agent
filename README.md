@@ -27,9 +27,39 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.example.com
 # Or set OTEL_EXPORTER_OTLP_LOGS_ENDPOINT directly.
 ```
 
-`OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_LOGS_HEADERS` support percent-encoded values. `OTEL_SDK_DISABLED=true` or an exporter list containing `none` disables export.
+`OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_LOGS_HEADERS` support percent-encoded values. `OTEL_RESOURCE_ATTRIBUTES` is merged into the resource, so `OTEL_RESOURCE_ATTRIBUTES=env=prod` reproduces the `env` attribute Codex derives from `otel.environment`. `OTEL_SDK_DISABLED=true` or an exporter list containing `none` disables export.
 
 Run `/codex-otel-status` in Pi or Oh My Pi to see whether the extension has an active endpoint.
+
+### Reusing an existing Codex config
+
+The extension reads environment variables only; it never parses `~/.codex/config.toml`. To send to the same endpoint Codex already uses, translate the `[otel]` section once in your shell profile and wrap the agent:
+
+```sh
+eval "$(python3 - "$HOME/.codex/config.toml" <<'TOML2ENV'
+import shlex, sys, tomllib
+from pathlib import Path
+from urllib.parse import quote
+
+otel = tomllib.loads(Path(sys.argv[1]).read_text()).get("otel", {})
+otlp = otel.get("exporter", {}).get("otlp-http", {})
+endpoint, headers = otlp.get("endpoint"), otlp.get("headers", {})
+if isinstance(endpoint, str) and endpoint:
+    encoded = ",".join(f"{quote(k, safe='')}={quote(v, safe='')}" for k, v in headers.items())
+    print(f"export OTEL_EXPORTER_OTLP_ENDPOINT={shlex.quote(endpoint)}")
+    print(f"export OTEL_EXPORTER_OTLP_HEADERS={shlex.quote(encoded)}")
+    if isinstance(otel.get("environment"), str):
+        print(f"export OTEL_RESOURCE_ATTRIBUTES=env={shlex.quote(otel['environment'])}")
+TOML2ENV
+)"
+
+omp() {
+  env OTEL_LOGS_EXPORTER=otlp OTEL_METRICS_EXPORTER=none OTEL_TRACES_EXPORTER=none \
+    OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf command omp "$@"
+}
+```
+
+Codex writes an endpoint that already ends in `/v1/logs`; the extension keeps it as is rather than appending a second suffix. Note that a logs endpoint in `OTEL_EXPORTER_OTLP_ENDPOINT` makes Oh My Pi's own OTLP export post to `<endpoint>/v1/logs`. Set `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` instead if you want both exports to reach the collector.
 
 ## Events
 
@@ -41,13 +71,15 @@ Run `/codex-otel-status` in Pi or Oh My Pi to see whether the extension has an a
 | Completed assistant turn | `codex.sse_event`                          | `event.kind=response.completed`, input, output, cache, reasoning, and total token counts |
 | Tool execution           | `codex.tool_decision`, `codex.tool_result` | Tool name, call ID, decision, duration, success                                          |
 
-The extension uses the closest Pi lifecycle event where Codex has no equivalent source signal. It does not invent auth mode, sandbox policy, request IDs, or SSE frame data.
+Every record also carries `event.name`, `event.timestamp`, `conversation.id`, `originator`, `app.version`, `terminal.type`, `model`, and `user.email`, matching the attribute keys Codex emits. `service.name` and `originator` are reported as `codex_cli_rs` so collectors keyed to Codex accept these logs unchanged; `app.version` is set to `pi-codex-otel/<version>`, which is what distinguishes these records from the Codex CLI's own.
+
+The extension uses the closest Pi lifecycle event where Codex has no equivalent source signal. It does not invent auth mode, sandbox policy, request IDs, or SSE frame data, and it exports logs only, no metrics or traces.
 
 ## Privacy
 
 Prompts are always sent as `[REDACTED]`; only their character length and image count are exported. Source code, file paths, tool arguments, and tool results are never exported.
 
-`user.email` comes from `git config --global user.email` when configured. Review collector retention and access policies before enabling team-wide export.
+`user.email` comes from the `email` claim of the id token in `$CODEX_HOME/auth.json` (default `~/.codex/auth.json`), the same source Codex uses, and falls back to `git config --global user.email`. The token is decoded locally, never verified or exported. Review collector retention and access policies before enabling team-wide export.
 
 ## Development
 

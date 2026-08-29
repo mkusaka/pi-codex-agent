@@ -1,5 +1,7 @@
 import { execFileSync } from "node:child_process";
-import { hostname, release } from "node:os";
+import { readFileSync } from "node:fs";
+import { homedir, hostname, release } from "node:os";
+import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { type LogAttributes, type Logger, SeverityNumber } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-proto";
@@ -8,11 +10,16 @@ import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs
 import {
   type CodexUsage,
   completionAttributes,
+  idTokenEmail,
   parseHeaders,
   resolveLogsEndpoint,
 } from "./core.js";
 
 const EXTENSION_VERSION = "0.0.3";
+// Codex's own originator/service name, so collectors treat these logs like Codex's own.
+const CODEX_ORIGINATOR = "codex_cli_rs";
+// Codex fills app.version with its CLI version; naming ourselves keeps omp rows distinguishable.
+const APP_VERSION = `pi-codex-otel/${EXTENSION_VERSION}`;
 
 type Runtime = {
   provider: LoggerProvider;
@@ -27,6 +34,16 @@ type Session = {
   email?: string;
   terminalType: string;
 };
+
+function codexAccountEmail(): string | undefined {
+  const home = process.env.CODEX_HOME ?? join(homedir(), ".codex");
+  try {
+    const auth = JSON.parse(readFileSync(join(home, "auth.json"), "utf8"));
+    return idTokenEmail(auth?.tokens?.id_token);
+  } catch {
+    return undefined;
+  }
+}
 
 function gitEmail(): string | undefined {
   try {
@@ -55,28 +72,28 @@ function createRuntime(): Runtime | undefined {
       : undefined);
   if (!endpoint) return undefined;
 
+  const headers = {
+    ...parseHeaders(process.env.OTEL_EXPORTER_OTLP_HEADERS),
+    ...parseHeaders(process.env.OTEL_EXPORTER_OTLP_LOGS_HEADERS),
+  };
+
   const provider = new LoggerProvider({
     resource: resourceFromAttributes({
-      "service.name": "codex-cli",
+      "service.name": CODEX_ORIGINATOR,
       "service.version": EXTENSION_VERSION,
       "os.type": process.platform,
       "os.version": release(),
       "host.arch": process.arch,
       "host.name": hostname(),
+      ...parseHeaders(process.env.OTEL_RESOURCE_ATTRIBUTES),
     }),
     processors: [
       new BatchLogRecordProcessor({
-        exporter: new OTLPLogExporter({
-          url: endpoint,
-          headers: {
-            ...parseHeaders(process.env.OTEL_EXPORTER_OTLP_HEADERS),
-            ...parseHeaders(process.env.OTEL_EXPORTER_OTLP_LOGS_HEADERS),
-          },
-        }),
+        exporter: new OTLPLogExporter({ url: endpoint, headers }),
       }),
     ],
   });
-  return { provider, logger: provider.getLogger("codex-cli", EXTENSION_VERSION), endpoint };
+  return { provider, logger: provider.getLogger(CODEX_ORIGINATOR, EXTENSION_VERSION), endpoint };
 }
 
 export default function codexOpenTelemetry(pi: ExtensionAPI): void {
@@ -96,9 +113,11 @@ export default function codexOpenTelemetry(pi: ExtensionAPI): void {
       severityText: "INFO",
       body: eventName,
       attributes: {
+        "event.name": eventName,
         "event.timestamp": timestamp.toISOString(),
         "conversation.id": session.id,
-        originator: "pi",
+        "app.version": APP_VERSION,
+        originator: CODEX_ORIGINATOR,
         "terminal.type": session.terminalType,
         model: session.model,
         ...(session.email ? { "user.email": session.email } : {}),
@@ -136,7 +155,7 @@ export default function codexOpenTelemetry(pi: ExtensionAPI): void {
       id: ctx.sessionManager.getSessionId(),
       model: model?.id ?? "unknown",
       provider: model?.provider ?? "unknown",
-      email: gitEmail(),
+      email: codexAccountEmail() ?? gitEmail(),
       terminalType: process.env.TERM_PROGRAM ?? process.env.TERM ?? "unknown",
     };
     emit("codex.conversation_starts", {

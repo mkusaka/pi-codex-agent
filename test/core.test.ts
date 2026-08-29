@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { completionAttributes, parseHeaders, resolveLogsEndpoint } from "../src/core.ts";
+import {
+  completionAttributes,
+  idTokenEmail,
+  parseHeaders,
+  resolveLogsEndpoint,
+} from "../src/core.ts";
 
 test("resolves standard OTLP log endpoints without duplication", () => {
   assert.equal(
@@ -47,4 +52,12 @@ test("parses and decodes OTLP headers without truncating equals", () => {
     "X-Trace": "one=two",
     "X-Tenant": "codex",
   });
+});
+
+test("reads the email claim from a Codex id_token", () => {
+  const claims = Buffer.from(JSON.stringify({ email: "user@example.com" })).toString("base64url");
+  assert.equal(idTokenEmail(`header.${claims}.signature`), "user@example.com");
+  assert.equal(idTokenEmail(undefined), undefined);
+  assert.equal(idTokenEmail("not-a-jwt"), undefined);
+  assert.equal(idTokenEmail("header.bm90LWpzb24.signature"), undefined);
 });
