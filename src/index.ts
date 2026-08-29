@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { homedir, hostname, release } from "node:os";
 import { join } from "node:path";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { type ExtensionAPI, getAgentDir } from "@earendil-works/pi-coding-agent";
 import { type LogAttributes, type Logger, SeverityNumber } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-proto";
 import { resourceFromAttributes } from "@opentelemetry/resources";
@@ -34,6 +34,44 @@ type Session = {
   email?: string;
   terminalType: string;
 };
+
+/**
+ * The account the agent is actually signed in as. Pi and Oh My Pi keep OAuth
+ * credentials in `<agentDir>/agent.db`, which is not part of their public API,
+ * so a schema change here degrades to the fallbacks rather than failing.
+ */
+async function agentAccountEmail(provider: string): Promise<string | undefined> {
+  const file = join(getAgentDir(), "agent.db");
+  const sql =
+    "SELECT data FROM auth_credentials WHERE provider = ? AND disabled_cause IS NULL ORDER BY updated_at DESC";
+  for (const specifier of ["bun:sqlite", "node:sqlite"]) {
+    let rows: { data?: unknown }[];
+    try {
+      const sqlite = await import(specifier as string);
+      const db = sqlite.Database
+        ? new sqlite.Database(file, { readonly: true })
+        : new sqlite.DatabaseSync(file, { readOnly: true });
+      try {
+        rows = db.query ? db.query(sql).all(provider) : db.prepare(sql).all(provider);
+      } finally {
+        db.close();
+      }
+    } catch {
+      continue;
+    }
+    for (const row of rows) {
+      if (typeof row.data !== "string") continue;
+      try {
+        const email = JSON.parse(row.data)?.email;
+        if (typeof email === "string" && email) return email;
+      } catch {
+        // A credential we cannot read is not a reason to skip the remaining ones.
+      }
+    }
+    return undefined;
+  }
+  return undefined;
+}
 
 function codexAccountEmail(): string | undefined {
   const home = process.env.CODEX_HOME ?? join(homedir(), ".codex");
@@ -151,11 +189,12 @@ export default function codexOpenTelemetry(pi: ExtensionAPI): void {
     runtime = createRuntime();
     if (!runtime) return;
     const model = ctx.model;
+    const provider = model?.provider ?? "unknown";
     session = {
       id: ctx.sessionManager.getSessionId(),
       model: model?.id ?? "unknown",
-      provider: model?.provider ?? "unknown",
-      email: codexAccountEmail() ?? gitEmail(),
+      provider,
+      email: (await agentAccountEmail(provider)) ?? codexAccountEmail() ?? gitEmail(),
       terminalType: process.env.TERM_PROGRAM ?? process.env.TERM ?? "unknown",
     };
     emit("codex.conversation_starts", {

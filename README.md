@@ -79,7 +79,7 @@ The extension uses the closest Pi lifecycle event where Codex has no equivalent 
 
 Prompts are always sent as `[REDACTED]`; only their character length and image count are exported. Source code, file paths, tool arguments, and tool results are never exported.
 
-`user.email` comes from the `email` claim of the id token in `$CODEX_HOME/auth.json` (default `~/.codex/auth.json`), the same source Codex uses, and falls back to `git config --global user.email`. The token is decoded locally, never verified or exported. Review collector retention and access policies before enabling team-wide export.
+`user.email` identifies the signed-in account, resolved in order: the agent's own OAuth credential in `<agentDir>/agent.db`, then the `email` claim of the id token in `$CODEX_HOME/auth.json` (the source Codex itself reads), then `git config --global user.email`. Only the address is exported; tokens are never read into a record, verified, or sent. Review collector retention and access policies before enabling team-wide export.
 
 ## Development
 
