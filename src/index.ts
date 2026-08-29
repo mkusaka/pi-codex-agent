@@ -15,7 +15,7 @@ import {
   resolveLogsEndpoint,
 } from "./core.js";
 
-const EXTENSION_VERSION = "0.0.3";
+const EXTENSION_VERSION = "0.0.4";
 // Codex's own originator/service name, so collectors treat these logs like Codex's own.
 const CODEX_ORIGINATOR = "codex_cli_rs";
 // Codex fills app.version with its CLI version; naming ourselves keeps omp rows distinguishable.
