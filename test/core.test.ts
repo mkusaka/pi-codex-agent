@@ -33,18 +33,18 @@ test("maps OMP usage to Codex response.completed token fields", () => {
       totalTokens: 170,
     }),
     {
-      input_token_count: 130,
-      output_token_count: 40,
+      input_token_count: "130",
+      output_token_count: "40",
       cached_token_count: 20,
       cache_write_token_count: 10,
-      reasoning_token_count: 30,
-      tool_token_count: 170,
+      reasoning_output_token_count: 30,
+      tool_token_count: "170",
     },
   );
 });
 
 test("uses computed total tokens when OMP omits totalTokens", () => {
-  assert.equal(completionAttributes({ input: 2, output: 3, cacheRead: 5 }).tool_token_count, 10);
+  assert.equal(completionAttributes({ input: 2, output: 3, cacheRead: 5 }).tool_token_count, "10");
 });
 
 test("parses and decodes OTLP headers without truncating equals", () => {

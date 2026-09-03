@@ -34,16 +34,17 @@ export function parseHeaders(raw: string | undefined): Record<string, string> {
   );
 }
 
-export function completionAttributes(usage: CodexUsage): Record<string, number> {
+export function completionAttributes(usage: CodexUsage): Record<string, string | number> {
   const input = (usage.input ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0);
   const output = usage.output ?? 0;
   return {
-    input_token_count: input,
-    output_token_count: output,
+    // Codex serializes these Display-formatted counters as OTLP strings.
+    input_token_count: String(input),
+    output_token_count: String(output),
     cached_token_count: usage.cacheRead ?? 0,
     cache_write_token_count: usage.cacheWrite ?? 0,
-    reasoning_token_count: usage.reasoning ?? 0,
-    tool_token_count: usage.totalTokens ?? input + output,
+    reasoning_output_token_count: usage.reasoning ?? 0,
+    tool_token_count: String(usage.totalTokens ?? input + output),
   };
 }
 
