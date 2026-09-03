@@ -15,9 +15,10 @@ import {
   resolveLogsEndpoint,
 } from "./core.js";
 
-const EXTENSION_VERSION = "0.0.5";
+const EXTENSION_VERSION = "0.0.6";
 // Codex's own originator/service name, so collectors treat these logs like Codex's own.
 const CODEX_ORIGINATOR = "codex_cli_rs";
+const CODEX_LOGGER_SCOPE = "codex_otel.log_only";
 // Codex fills app.version with its CLI version; naming ourselves keeps omp rows distinguishable.
 const APP_VERSION = `pi-codex-otel/${EXTENSION_VERSION}`;
 
@@ -123,6 +124,9 @@ function createRuntime(): Runtime | undefined {
       "os.version": release(),
       "host.arch": process.arch,
       "host.name": hostname(),
+      "telemetry.sdk.name": "opentelemetry",
+      "telemetry.sdk.language": "rust",
+      "telemetry.sdk.version": "0.31.0",
       ...parseHeaders(process.env.OTEL_RESOURCE_ATTRIBUTES),
     }),
     processors: [
@@ -131,7 +135,7 @@ function createRuntime(): Runtime | undefined {
       }),
     ],
   });
-  return { provider, logger: provider.getLogger(CODEX_ORIGINATOR, EXTENSION_VERSION), endpoint };
+  return { provider, logger: provider.getLogger(CODEX_LOGGER_SCOPE), endpoint };
 }
 
 export default function codexOpenTelemetry(pi: ExtensionAPI): void {
@@ -149,7 +153,6 @@ export default function codexOpenTelemetry(pi: ExtensionAPI): void {
       observedTimestamp: timestamp,
       severityNumber: SeverityNumber.INFO,
       severityText: "INFO",
-      body: eventName,
       attributes: {
         "event.name": eventName,
         "event.timestamp": timestamp.toISOString(),
