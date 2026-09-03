@@ -3,7 +3,7 @@ export interface CodexUsage {
   output?: number;
   cacheRead?: number;
   cacheWrite?: number;
-  reasoningTokens?: number;
+  reasoning?: number;
   totalTokens?: number;
 }
 
@@ -42,7 +42,7 @@ export function completionAttributes(usage: CodexUsage): Record<string, number> 
     output_token_count: output,
     cached_token_count: usage.cacheRead ?? 0,
     cache_write_token_count: usage.cacheWrite ?? 0,
-    reasoning_token_count: usage.reasoningTokens ?? 0,
+    reasoning_token_count: usage.reasoning ?? 0,
     tool_token_count: usage.totalTokens ?? input + output,
   };
 }

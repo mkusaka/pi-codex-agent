@@ -29,7 +29,7 @@ test("maps OMP usage to Codex response.completed token fields", () => {
       output: 40,
       cacheRead: 20,
       cacheWrite: 10,
-      reasoningTokens: 30,
+      reasoning: 30,
       totalTokens: 170,
     }),
     {
