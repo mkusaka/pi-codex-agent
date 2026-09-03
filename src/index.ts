@@ -260,7 +260,7 @@ export default function codexOpenTelemetry(pi: ExtensionAPI): void {
     if (emitted) await flush();
   });
 
-  pi.on("tool_call", async (event) => {
+  pi.on("tool_execution_start", async (event) => {
     toolStartedAt.set(event.toolCallId, Date.now());
     emit("codex.tool_decision", {
       tool_name: event.toolName,
@@ -271,7 +271,7 @@ export default function codexOpenTelemetry(pi: ExtensionAPI): void {
     });
   });
 
-  pi.on("tool_result", async (event) => {
+  pi.on("tool_execution_end", async (event) => {
     const startedAt = toolStartedAt.get(event.toolCallId) ?? Date.now();
     toolStartedAt.delete(event.toolCallId);
     emit("codex.tool_result", {
