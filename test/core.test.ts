@@ -37,7 +37,7 @@ test("maps OMP usage to Codex response.completed token fields", () => {
       output_token_count: "40",
       cached_token_count: 20,
       cache_write_token_count: 10,
-      reasoning_output_token_count: 30,
+      reasoning_token_count: 30,
       tool_token_count: "170",
     },
   );

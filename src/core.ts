@@ -43,7 +43,7 @@ export function completionAttributes(usage: CodexUsage): Record<string, string |
     output_token_count: String(output),
     cached_token_count: usage.cacheRead ?? 0,
     cache_write_token_count: usage.cacheWrite ?? 0,
-    reasoning_output_token_count: usage.reasoning ?? 0,
+    reasoning_token_count: usage.reasoning ?? 0,
     tool_token_count: String(usage.totalTokens ?? input + output),
   };
 }
