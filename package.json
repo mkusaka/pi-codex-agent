@@ -1,6 +1,6 @@
 {
   "name": "pi-codex-otel",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Export Pi and Oh My Pi activity as Codex-compatible OpenTelemetry logs.",
   "keywords": [
     "codex",
