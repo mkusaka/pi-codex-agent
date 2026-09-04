@@ -15,7 +15,7 @@ import {
   resolveLogsEndpoint,
 } from "./core.js";
 
-const EXTENSION_VERSION = "0.0.6";
+const EXTENSION_VERSION = "0.0.5";
 // Codex's own originator/service name, so collectors treat these logs like Codex's own.
 const CODEX_ORIGINATOR = "codex_cli_rs";
 const CODEX_LOGGER_SCOPE = "codex_otel.log_only";
